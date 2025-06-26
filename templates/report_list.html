@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Malaria Reports</h2>
+<ul class="list-group">
+  {% for report in reports %}
+    <li class="list-group-item">
+      <strong>{{ report.date_reported|date:"Y-m-d H:i" }}</strong> - Severity: {{ report.severity }} - Validated: {{ report.validated }}
+      <br />Symptoms: {{ report.symptoms }}
+    </li>
+  {% empty %}
+    <li class="list-group-item">No reports yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
