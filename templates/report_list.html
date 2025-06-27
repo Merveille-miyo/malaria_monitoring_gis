@@ -1,14 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>My Malaria Reports</h2>
-<ul class="list-group">
-  {% for report in reports %}
-    <li class="list-group-item">
-      <strong>{{ report.date_reported|date:"Y-m-d H:i" }}</strong> - Severity: {{ report.severity }} - Validated: {{ report.validated }}
-      <br />Symptoms: {{ report.symptoms }}
-    </li>
-  {% empty %}
-    <li class="list-group-item">No reports yet.</li>
-  {% endfor %}
-</ul>
+<h2>Malaria Case Reports</h2>
+
+{% if reports %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Reporter</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td>{{ report.date_reported|date:"M d, Y H:i" }}</td>
+                        <td>{{ report.reporter.get_full_name|default:report.reporter.username }}</td>
+                        <td>
+                            <span class="badge bg-{% if report.severity == 'critical' %}danger{% elif report.severity == 'high' %}warning{% elif report.severity == 'medium' %}info{% else %}success{% endif %}">
+                                {{ report.severity|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if report.validated %}
+                                <span class="badge bg-success">Validated</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'reports:report_detail' report.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            {% if user.role in 'medofficer,analyst' and not report.validated %}
+                                <a href="{% url 'reports:report_validate' report.id %}" class="btn btn-sm btn-success">Validate</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>No reports found.</p>
+    </div>
+{% endif %}
+
+{% if user.role == 'healthworker' %}
+    <div class="mt-3">
+        <a href="{% url 'reports:report_create' %}" class="btn btn-primary">Submit New Report</a>
+    </div>
+{% endif %}
 {% endblock %}

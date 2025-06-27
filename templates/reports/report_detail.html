@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Case Report Details</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Report Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Reporter:</strong> {{ report.reporter.get_full_name|default:report.reporter.username }}</p>
+                        <p><strong>Date Reported:</strong> {{ report.date_reported|date:"M d, Y H:i" }}</p>
+                        <p><strong>Severity:</strong> 
+                            <span class="badge bg-{% if report.severity == 'critical' %}danger{% elif report.severity == 'high' %}warning{% elif report.severity == 'medium' %}info{% else %}success{% endif %}">
+                                {{ report.severity|title }}
+                            </span>
+                        </p>
+                        <p><strong>Status:</strong> 
+                            {% if report.validated %}
+                                <span class="badge bg-success">Validated</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        {% if report.validated %}
+                            <p><strong>Validated By:</strong> {{ report.validated_by.get_full_name|default:report.validated_by.username }}</p>
+                            <p><strong>Validation Date:</strong> {{ report.validation_date|date:"M d, Y H:i" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6>Symptoms:</h6>
+                <p>{{ report.symptoms }}</p>
+                
+                {% if report.notes %}
+                    <h6>Notes:</h6>
+                    <p>{{ report.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Actions</h5>
+            </div>
+            <div class="card-body">
+                {% if user.role in 'medofficer,analyst' and not report.validated %}
+                    <a href="{% url 'reports:report_validate' report.id %}" class="btn btn-success w-100 mb-2">Validate Report</a>
+                {% endif %}
+                
+                {% if user.role == 'healthworker' and report.reporter == user %}
+                    <a href="#" class="btn btn-outline-primary w-100 mb-2">Edit Report</a>
+                {% endif %}
+                
+                <a href="{% url 'reports:report_list' %}" class="btn btn-outline-secondary w-100">Back to Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

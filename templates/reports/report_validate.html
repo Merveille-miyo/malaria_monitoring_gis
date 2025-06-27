@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Validate Case Report</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Report Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Reporter:</strong> {{ report.reporter.get_full_name|default:report.reporter.username }}</p>
+                <p><strong>Date Reported:</strong> {{ report.date_reported|date:"M d, Y H:i" }}</p>
+                <p><strong>Severity:</strong> {{ report.severity|title }}</p>
+                <p><strong>Symptoms:</strong> {{ report.symptoms }}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Validation</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Validation Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about this validation..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Validate Report</button>
+                    <a href="{% url 'reports:report_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

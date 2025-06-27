@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome, {{ user.get_full_name|default:user.username }}!</h2>
+<p>Role: {{ user.get_role_display }}</p>
+
+{% if user.role == 'healthworker' %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'reports:report_create' %}" class="btn btn-success btn-lg w-100 mb-2">Submit New Case Report</a>
+                    <a href="{% url 'reports:report_list' %}" class="btn btn-outline-primary w-100 mb-2">View My Reports</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Recent Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_reports %}
+                        <ul class="list-group list-group-flush">
+                            {% for report in recent_reports %}
+                                <li class="list-group-item">
+                                    <strong>{{ report.date_reported|date:"M d, Y" }}</strong><br>
+                                    Severity: {{ report.severity }}<br>
+                                    Status: {% if report.validated %}<span class="badge bg-success">Validated</span>{% else %}<span class="badge bg-warning">Pending</span>{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No reports submitted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% elif user.role == 'medofficer' %}
+    <!-- Medical Officer Dashboard -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ pending_reports_count }}</h3>
+                    <p>Pending Reports</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3>{{ high_risk_areas_count }}</h3>
+                    <p>High Risk Areas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h3>{{ active_alerts_count }}</h3>
+                    <p>Active Alerts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Case Reports</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_reports %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Reporter</th>
+                                        <th>Severity</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for report in recent_reports %}
+                                        <tr>
+                                            <td>{{ report.date_reported|date:"M d, Y" }}</td>
+                                            <td>{{ report.reporter.username }}</td>
+                                            <td><span class="badge bg-{% if report.severity == 'high' %}danger{% elif report.severity == 'medium' %}warning{% else %}success{% endif %}">{{ report.severity }}</span></td>
+                                            <td>{% if report.validated %}<span class="badge bg-success">Validated</span>{% else %}<span class="badge bg-warning">Pending</span>{% endif %}</td>
+                                            <td><a href="{% url 'reports:report_detail' report.id %}" class="btn btn-sm btn-outline-primary">View</a></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No reports to review.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'reports:report_list' %}" class="btn btn-primary w-100 mb-2">Review All Reports</a>
+                    <a href="{% url 'gisdata:map' %}" class="btn btn-outline-primary w-100 mb-2">View Risk Map</a>
+                    <a href="{% url 'dashboard:analytics' %}" class="btn btn-outline-info w-100 mb-2">Analytics Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% elif user.role == 'analyst' %}
+    <!-- Health Analyst Dashboard -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Analytics Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4>{{ total_cases }}</h4>
+                            <p class="text-muted">Total Cases</p>
+                        </div>
+                        <div class="col-6">
+                            <h4>{{ cases_this_month }}</h4>
+                            <p class="text-muted">This Month</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5>Risk Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4>{{ high_risk_areas_count }}</h4>
+                            <p class="text-muted">High Risk Areas</p>
+                        </div>
+                        <div class="col-6">
+                            <h4>{{ trend_percentage }}%</h4>
+                            <p class="text-muted">Trend Change</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Analytics Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'dashboard:trends' %}" class="btn btn-outline-primary w-100 mb-2">Trend Analysis</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'dashboard:heatmap' %}" class="btn btn-outline-danger w-100 mb-2">Heatmap</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'dashboard:reports' %}" class="btn btn-outline-info w-100 mb-2">Generate Reports</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'gisdata:map' %}" class="btn btn-outline-success w-100 mb-2">GIS Analysis</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% elif user.role == 'publicuser' %}
+    <!-- Public User Dashboard -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5>Current Malaria Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-success">{{ low_risk_areas_count }}</h4>
+                            <p>Low Risk Areas</p>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">{{ medium_risk_areas_count }}</h4>
+                            <p>Medium Risk Areas</p>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-danger">{{ high_risk_areas_count }}</h4>
+                            <p>High Risk Areas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Quick Access</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'gisdata:map' %}" class="btn btn-primary w-100 mb-2">Interactive Map</a>
+                    <a href="{% url 'dashboard:alerts' %}" class="btn btn-warning w-100 mb-2">View Alerts</a>
+                    <a href="{% url 'dashboard:subscribe' %}" class="btn btn-outline-primary w-100 mb-2">Subscribe to Updates</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_alerts %}
+                        {% for alert in recent_alerts %}
+                            <div class="alert alert-{% if alert.level == 'high' %}danger{% elif alert.level == 'medium' %}warning{% else %}info{% endif %}">
+                                <h6>{{ alert.title }}</h6>
+                                <p class="mb-1">{{ alert.message }}</p>
+                                <small class="text-muted">{{ alert.created_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No active alerts at the moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Default Dashboard -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4>Welcome to Malaria Monitoring System</h4>
+                    <p class="text-muted">Please contact your administrator to set up your role and permissions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Analytics Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Case Statistics</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ total_cases }}</h3>
+                <p>Total Cases Reported</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Cases by Severity</h5>
+            </div>
+            <div class="card-body">
+                {% for severity in cases_by_severity %}
+                    <div class="d-flex justify-content-between">
+                        <span>{{ severity.severity|title }}</span>
+                        <span class="badge bg-primary">{{ severity.count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Monthly Trends</h5>
+            </div>
+            <div class="card-body">
+                <p>Chart visualization will be implemented here.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

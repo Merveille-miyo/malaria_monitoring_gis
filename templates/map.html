@@ -11,11 +11,35 @@
       height: 600px;
       width: 100%;
     }
+    .legend {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
   </style>
 {% endblock %}
 
 {% block content %}
   <h2>Malaria Risk Map - Cameroon</h2>
+  
+  <div class="row mb-3">
+    <div class="col-md-12">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" onclick="toggleLayer('risk-zones')">Risk Zones</button>
+        <button type="button" class="btn btn-outline-primary" onclick="toggleLayer('neighborhoods')">Neighborhoods</button>
+        <button type="button" class="btn btn-outline-primary" onclick="toggleLayer('health-facilities')">Health Facilities</button>
+      </div>
+    </div>
+  </div>
+  
   <div id="map"></div>
 
   <script>
@@ -24,23 +48,103 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 15,
       attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map); 
+    }).addTo(map);
 
-    L.geoJSON(geojson, {
+    // Layer groups
+    const riskZonesLayer = L.layerGroup();
+    const neighborhoodsLayer = L.layerGroup();
+    const healthFacilitiesLayer = L.layerGroup();
+
+    // Risk Zones
+    const riskZonesData = JSON.parse('{{ risk_zones_geojson|escapejs }}');
+    L.geoJSON(riskZonesData, {
       style: function (feature) {
         const level = feature.properties.risk_level;
-        const color = level === 'high' ? 'red' : level === 'medium' ? 'orange' : 'green';
+        const color = level === 'critical' ? '#d73027' : level === 'high' ? '#fc8d59' : level === 'medium' ? '#fee08b' : '#91cf60';
         return { color: color, weight: 2, fillOpacity: 0.5 };
       },
       onEachFeature: function (feature, layer) {
-        const popupContent = `<b>${feature.properties.name}</b><br>Risk: ${feature.properties.risk_level}`;
+        const popupContent = `<b>${feature.properties.name}</b><br>Risk: ${feature.properties.risk_level}<br>${feature.properties.description || ''}`;
         layer.bindPopup(popupContent);
       }
-    }).addTo(map);
+    }).addTo(riskZonesLayer);
+
+    // Neighborhoods
+    const neighborhoodsData = JSON.parse('{{ neighborhoods_geojson|escapejs }}');
+    L.geoJSON(neighborhoodsData, {
+      style: function (feature) {
+        const level = feature.properties.risk_level;
+        const color = level === 'critical' ? '#d73027' : level === 'high' ? '#fc8d59' : level === 'medium' ? '#fee08b' : '#91cf60';
+        return { color: color, weight: 1, fillOpacity: 0.3, dashArray: '5, 5' };
+      },
+      onEachFeature: function (feature, layer) {
+        const popupContent = `<b>${feature.properties.name}</b><br>Risk: ${feature.properties.risk_level}<br>Population: ${feature.properties.population || 'N/A'}`;
+        layer.bindPopup(popupContent);
+      }
+    }).addTo(neighborhoodsLayer);
+
+    // Health Facilities
+    const healthFacilitiesData = JSON.parse('{{ health_facilities_geojson|escapejs }}');
+    L.geoJSON(healthFacilitiesData, {
+      pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 8,
+          fillColor: "#3388ff",
+          color: "#000",
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        });
+      },
+      onEachFeature: function (feature, layer) {
+        const popupContent = `<b>${feature.properties.name}</b><br>Type: ${feature.properties.facility_type}<br>Contact: ${feature.properties.contact_number || 'N/A'}`;
+        layer.bindPopup(popupContent);
+      }
+    }).addTo(healthFacilitiesLayer);
+
+    // Add layers to map
+    riskZonesLayer.addTo(map);
+    neighborhoodsLayer.addTo(map);
+    healthFacilitiesLayer.addTo(map);
+
+    // Layer control functions
+    function toggleLayer(layerName) {
+      switch(layerName) {
+        case 'risk-zones':
+          if (map.hasLayer(riskZonesLayer)) {
+            map.removeLayer(riskZonesLayer);
+          } else {
+            map.addLayer(riskZonesLayer);
+          }
+          break;
+        case 'neighborhoods':
+          if (map.hasLayer(neighborhoodsLayer)) {
+            map.removeLayer(neighborhoodsLayer);
+          } else {
+            map.addLayer(neighborhoodsLayer);
+          }
+          break;
+        case 'health-facilities':
+          if (map.hasLayer(healthFacilitiesLayer)) {
+            map.removeLayer(healthFacilitiesLayer);
+          } else {
+            map.addLayer(healthFacilitiesLayer);
+          }
+          break;
+      }
+    }
+
+    // Add legend
+    const legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = '<h4>Risk Levels</h4>' +
+        '<i style="background: #d73027"></i> Critical<br>' +
+        '<i style="background: #fc8d59"></i> High<br>' +
+        '<i style="background: #fee08b"></i> Medium<br>' +
+        '<i style="background: #91cf60"></i> Low<br>';
+      return div;
+    };
+    legend.addTo(map);
   </script>
-
-  <script>
-  const geojson = JSON.parse('{{ geojson|escapejs }}');
-</script>
-
 {% endblock %}

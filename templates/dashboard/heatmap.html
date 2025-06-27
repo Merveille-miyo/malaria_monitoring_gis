@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<style>
+    #heatmap {
+        height: 600px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Case Density Heatmap</h2>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Malaria Case Heatmap</h5>
+            </div>
+            <div class="card-body">
+                <div id="heatmap"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const map = L.map('heatmap').setView([6.6111, 20.9394], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 15,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    
+    const caseData = {{ case_data|safe }};
+    const heat = L.heatLayer(caseData, {radius: 25}).addTo(map);
+</script>
+{% endblock %} 

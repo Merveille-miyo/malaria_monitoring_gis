@@ -14,7 +14,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
+    # 'django.contrib.gis',  # Commented out for SQLite development
 
     # Your apps
     'accounts',
@@ -24,7 +24,7 @@ INSTALLED_APPS = [
 
     # Third party
     'crispy_forms',
-    'leaflet',
+    # 'leaflet',  # Commented out for SQLite development
     'rest_framework',
 ]
 
@@ -56,16 +56,25 @@ TEMPLATES = [{
 
 WSGI_APPLICATION = 'malaria_monitoring_gis.wsgi.application'
 
+# Temporary SQLite configuration for development
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'malaria_db',
-        'USER': 'malaria_user',
-        'PASSWORD': 'malaria_pass',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Uncomment this for PostgreSQL with PostGIS (requires GDAL setup)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': 'malaria_db',
+#         'USER': 'malaria_user',
+#         'PASSWORD': 'malaria_pass',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},

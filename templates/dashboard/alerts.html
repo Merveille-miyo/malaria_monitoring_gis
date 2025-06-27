@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Active Alerts</h2>
+
+<div class="row">
+    <div class="col-12">
+        {% if alerts %}
+            {% for alert in alerts %}
+                <div class="alert alert-{% if alert.level == 'critical' %}danger{% elif alert.level == 'high' %}warning{% elif alert.level == 'medium' %}info{% else %}success{% endif %}">
+                    <h5>{{ alert.title }}</h5>
+                    <p>{{ alert.message }}</p>
+                    <small class="text-muted">Posted on {{ alert.created_at|date:"M d, Y H:i" }}</small>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-success">
+                <h5>No Active Alerts</h5>
+                <p>There are currently no active malaria alerts in your area.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
